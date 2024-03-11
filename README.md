@@ -4,7 +4,6 @@
 - [👄 说明](#intro)
 - [👣 使用步骤](#steps)
 
-
 <a name="aim"></a><br>
 # 1. 目的
 
@@ -14,14 +13,15 @@
 # 2. 说明
 
 # 2.1. 推理服务架构
-<服务端> --------API调用-------- <客户端>
+<推理服务端通过运行Docker镜像启动服务> --------API调用-------- <客户端通过请求方式推理>
 
-# 2.2. 推理过程
-<客户端>   --------发起推理请求-------->  <服务端>
+推理步骤：
 
-<客户端>  <--------回复推理请求--------  <服务端>
+1） <客户端>   --------发起推理请求-------->  <服务端>
 
-# 2.3. 详细说明
+2） <客户端>  <--------回复推理请求--------  <服务端>
+
+# 2.2. 详细说明
 通常使用大规模语言模型（本文简称LLM）是服务端和客户端的软件架构，中间通过API调用的方式，由客户端发起请求，服务端应答，客户端得到回复。而这其中以OpenAI的API接口最为通用。
 
 OrionStar开发了一个Docker镜像的镜像文件，帮助用户省去软件环境搭建，软件安装，Python安装包安装，服务启动的繁琐步骤，简化整体启动服务过程。对于不了解Docker的用户，请先通过[Docker网站说明链接](https://docs.docker.com/reference/)了解一下，并在本地做好Docker的安装，本文不做赘述。
@@ -33,6 +33,15 @@ OrionStar开发了一个Docker镜像的镜像文件，帮助用户省去软件�
 - 下载vLLM源码，构建并安装vLLM包
 
 - 启动vLLM自带基于OpenAI接口的推理服务
+
+# 2.3. 宿主机操作系统
+
+目前尝试过的宿主机操作系统主要包含:
+- CentOS7.9
+- Ubuntu20.04
+- Windows
+
+Windows下建议在Windows Subsystem for Linux(WSL)环境中使用。
 
 # 2.4. 环境变量
 用户需要提前准备好需要推理的模型，并明确以下几个环境变量的含义：
@@ -61,10 +70,10 @@ OrionStar开发了一个Docker镜像的镜像文件，帮助用户省去软件�
 
 ## 3.1. 构建镜像
 
-该过程最后一步的构建速度取决于网速以及宿主机的性能，中间涉及下载PIP包，可能过程长达20分钟，请耐心等待，如有错误请通过github的issue系统提交错误信息。
+该过程最后一步的构建速度取决于网速以及宿主机的性能，中间涉及下载PIP包，可能过程长达20分钟~60分钟，请耐心等待，如有错误请通过github的issue系统提交错误信息。
 此例我们将构建的Docker镜像名称命名为<span style="color:blue;">vllm_server:0.0.0.0</span>
 ```shell
-git clone vllm_server
+git clone git@github.com:OrionStarAI/vllm_server.git
 cd vllm_server
 docker build -t vllm_server:0.0.0.0 -f Dockerfile .
 ```
@@ -74,10 +83,15 @@ docker build -t vllm_server:0.0.0.0 -f Dockerfile .
 
 这里的<span style="color:blue;">\$MODEL_ABSOLUTE_ROOT</span>按照上面的说明，请填写宿主机的绝对路径，此例我们以下载路径为<span style="color:blue;">\$HOME/Downloads</span>举例
 这里我们以主机有两块显卡（0和1，可以通过nvidia-smi命令查看显卡信息）举例<span style="color:blue;">"CUDA_VISIBLE_DEVICES=0，1"</span>，并且容器启动时，会以CUDA的方式运行推理服务。
+当多块卡进行推理时，需要在vLLM启动服务命令参数中增加<span style="color:blue;">-tp <gpu_num></span>
 
 这里模型目录我们以Orion-14B-Chat为例，并且给与推理服务的模型名为orion14b-chat，通过上一步构建的镜像名称<span style="color:blue;">vllm_server:0.0.0.0</span>启动推理服务
 ```shell
-docker run -it -p 9999:9999 -v $(pwd)/logs:/workspace/logs:rw -v $HOME/Downloads:/workspace/models -e CUDA_VISIBLE_DEVICES=0,1 -e MODEL_DIR=Orion-14B-Chat -e MODEL_NAME=orion14b-chat vllm_server:0.0.0.0
+docker run --gpus all -it -p 9999:9999 -v $(pwd)/logs:/workspace/logs:rw -v $HOME/Downloads:/workspace/models -e CUDA_VISIBLE_DEVICES=0,1 -e MODEL_DIR=Orion-14B-Chat -e MODEL_NAME=orion14b-chat vllm_server:0.0.0.0
+```
+如果显卡内存过小，建议使用量化后版本的模型，例如对于猎户自研Orion14B模型，如果单卡显存小于32G,可以通过修改Dockerfile中ENTRYPOINT部分的代码，启动量化模型的推理服务。（注意这里的MODEL_DIR是量化版本的模型目录，记得加上数据类型和量化方法的参数<span style="color:blue;">--dtype float16 --quantization awq</span>）
+```shell
+python -m vllm.entrypoints.openai.api_server --host=0.0.0.0 --port=9999 --model=/workspace/models/$MODEL_DIR --dtype float16 --quantization awq --trust-remote-code --gpu-memory-utilization=0.8 --device=cuda --enforce-eager --served-model-name=$MODEL_NAME
 ```
 
 ## 3.3. 推理请求
