@@ -1,103 +1,114 @@
 # 目录
 
-- [🎯 目的](#aim)
-- [👄 说明](#intro)
-- [👣 使用步骤](#steps)
+- [🎯 Target](#aim)
+- [👄 Description](#intro)
+- [👣 Steps](#steps)
 
 <a name="aim"></a><br>
-# 1. 目的
+# 1. Target
 
-此工程通过Dockerfile构建基于vLLM推理框架的符合OpenAI接口标准的推理镜像，方便用户启动本地大规模语言模型推理服务。
+This project builds an LLM inference service image based on the vLLM inference framework using a Dockerfile, adhering to the OpenAI interface standards.  This facilitates users in launching a local LLM model inference service.
 
 <a name="intro"></a><br>
-# 2. 说明
+# 2. Description
 
-# 2.1. 推理服务架构
-<推理服务端通过运行Docker镜像启动服务> --------API调用-------- <客户端通过请求方式推理>
+# 2.1. Inference service arch
+\<Inference service by running a docker image\> --------API Call-------- \<Inference request by client\>
 
-推理步骤：
+Inference steps：
 
-1） <客户端>   --------发起推理请求-------->  <服务端>
+1） \<Client\>   --------Send inference request-------->  \<Server\>
 
-2） <客户端>  <--------回复推理请求--------  <服务端>
+2） \<Client\>  <--------Send inference response--------  \<Server\>
 
-# 2.2. 详细说明
-通常使用大规模语言模型（本文简称LLM）是服务端和客户端的软件架构，中间通过API调用的方式，由客户端发起请求，服务端应答，客户端得到回复。而这其中以OpenAI的API接口最为通用。
+# 2.2. Details
 
-OrionStar开发了一个Docker镜像的镜像文件，帮助用户省去软件环境搭建，软件安装，Python安装包安装，服务启动的繁琐步骤，简化整体启动服务过程。对于不了解Docker的用户，请先通过[Docker网站说明链接](https://docs.docker.com/reference/)了解一下，并在本地做好Docker的安装，本文不做赘述。
+LLM, such as those provided by OpenAI, typically operate within a server-client software architecture. In this setup, the client initiates requests through an API, the server responds, and the client receives the reply. OpenAI's API interface is particularly versatile and widely used in this context.
 
-该镜像基于Ubuntu22.04的系统，Docker构建的步骤包含：
+OrionStar has developed a Docker image file designed to simplify the service startup process by eliminating the need for manual software environment setup, software build&installation, Python package installation, and service initiation. For those unfamiliar with Docker, it is recommended to familiarize yourself with it through the [Docker documentation link](https://docs.docker.com/reference/) and ensure Docker is installed locally. This article will not elaborate on that process.
 
-- 安装所有依赖的apt包以及python的PIP包
+The image is built on the Ubuntu 22.04 system and the Docker build steps include:
 
-- 下载vLLM源码，构建并安装vLLM包
+- Installing all necessary apt packages and Python PIP packages.
 
-- 启动vLLM自带基于OpenAI接口的推理服务
+- Downloading the vLLM source code, building, and installing the vLLM package.
 
-# 2.3. 宿主机操作系统
+- Launching the vLLM's built-in inference service based on the OpenAI API.
 
-目前尝试过的宿主机操作系统主要包含:
-- CentOS7.9
-- Ubuntu20.04
+# 2.3. Host operating system
+
+The host operating systems that have been tested primarily include:
+
+- CentOS 7.9
+- Ubuntu 20.04
 - Windows
 
-Windows下建议在Windows Subsystem for Linux(WSL)环境中使用。
+It is recommended to use Windows Subsystem for Linux (WSL) when operating on Windows host.
 
-# 2.4. 环境变量
-用户需要提前准备好需要推理的模型，并明确以下几个环境变量的含义：
+
+# 2.4. Environment Variables
+Users need to prepare the model for inference in advance and understand the meaning of the following environment variables:
 
 - **MODEL_ABSOLUTE_ROOT**
 
-  模型目录所在的根目录，需要是一个绝对路径，不能是软链接，否则在Docker Container内部无法访问。
-该变量主要体现在Docker镜像启动时宿主机模型根路径和容器内模型根路径的映射关系上，即<span style="color:blue;">"-v $MODEL_ABSOLUTE_ROOT:/workspace/models"</span>，这里冒号左边代表宿主机的模型根路径，冒号右边是Docker容器内固定的路径，Docker容器启动会基于/workspace/models结合模型路径正确找到模型。
+    The root directory where the model directory is located. This needs to be an absolute path and cannot be a symbolic link, otherwise, it will not be accessible inside the Docker Container. This variable is mainly reflected in the mapping between model root path on host and the model root path on container when the Docker image is started, that is, <span style="color:blue;">"-v \$MODEL_ABSOLUTE_ROOT:/workspace/models"</span>. Here, the left side of the colon represents the host machine's model root path, and the right side is a fixed path inside the Docker container. The Docker container will start and locate the model correctly based on /workspace/models combined with the model path.
 
-  举例：假设用户将Orion-14B-Chat模型下载到了<span style="color:blue;">\$HOME/Downloads</span>下，完整的本地模型路径是<span style="color:blue;">\$HOME/Downloads/Orion-14B-Chat</span>，那么MODEL_ABSOLUTE_ROOT就是<span style="color:blue;">\$HOME/Downloads</span>
+    Example: If a user has downloaded the Orion-14B-Chat model to <span style="color:blue;">\$HOME/Downloads</span>, the complete local model path is <span style="color:blue;">\$HOME/Downloads/Orion-14B-Chat</span>, then MODEL_ABSOLUTE_ROOT would be <span style="color:blue;">\$HOME/Downloads</span>.
 
 - **MODEL_DIR**
 
-  模型的目录名。举例：假设用户将Orion-14B-Chat模型下载到了<span style="color:blue;">\$HOME/Downloads</span>下，完整的本地模型路径是<span style="color:blue;">\$HOME/Downloads/Orion-14B-Chat</span>，那么MODEL_DIR就是Orion-14B-Chat
+    The directory name of the model. For example: If a user has downloaded the Orion-14B-Chat model to <span style="color:blue;">\$HOME/Downloads</span>, the complete local model path is <span style="color:blue;">\$HOME/Downloads/Orion-14B-Chat</span>, then MODEL_DIR would be Orion-14B-Chat.
 
 - **MODEL_NAME**
 
-  模型在推理过程中的名字，后续在启动推理请求时需要在HTTP包中注明对应的模型名称，推理请求时，该名称需要保持和推理服务启动时一致的名字
+    The name of the model during the inference process. This name must be specified in the HTTP packet when initiating an inference request and must remain consistent with the name used when starting the inference service.
 
 - **CUDA_VISIBLE_DEVICES**
 
-  用户需要确认自己工作环境中的GPU信息，可以通过nvidia-smi确认目前GPU使用情况，自行决定使用几块卡进行推理服务
+    Users need to verify the GPU information in their work environment. This can be done by checking the current GPU usage with nvidia-smi and deciding how many cards to use for the inference service.
+
 
 <a name="steps"></a><br>
-# 3. 使用步骤
+# 3. Steps
 
-## 3.1. 构建镜像
+## 3.1. Build docker image
 
-该过程最后一步的构建速度取决于网速以及宿主机的性能，中间涉及下载PIP包，可能过程长达20分钟~60分钟，请耐心等待，如有错误请通过github的issue系统提交错误信息。
-此例我们将构建的Docker镜像名称命名为<span style="color:blue;">vllm_server:0.0.0.0</span>
+The build speed, depends on the network speed and the performance of the host machine. It involves downloading PIP packages, which could take from 20 minutes to 60 minutes.
+
+Please be patient, and if there are any errors, submit the error information through the GitHub issue system.
+
+In this case, we will name the built Docker image as follows:
+<span style="color:blue;">vllm_server:0.0.0.0</span>
 ```shell
 git clone git@github.com:OrionStarAI/vllm_server.git
 cd vllm_server
 docker build -t vllm_server:0.0.0.0 -f Dockerfile .
 ```
 
-## 3.2. 启动镜像并开启推理服务
-这里宿主机和Docker容器之间的通讯端口使用的是<span style="color:blue;">9999</span>，如果和用户的宿主机服务器有冲突，请自行修改Dockerfile中<span style="color:blue;">ENTRYPOINT</span>部分中，<span style="color:blue;">"--port"</span>的设置，以及docker run启动过程中的宿主机和容器之间的端口映射关系。
+## 3.2. Run Docker image & start inference service
 
-这里的<span style="color:blue;">\$MODEL_ABSOLUTE_ROOT</span>按照上面的说明，请填写宿主机的绝对路径，此例我们以下载路径为<span style="color:blue;">\$HOME/Downloads</span>举例
-这里我们以主机有两块显卡（0和1，可以通过nvidia-smi命令查看显卡信息）举例<span style="color:blue;">"CUDA_VISIBLE_DEVICES=0，1"</span>，并且容器启动时，会以CUDA的方式运行推理服务。
-当多块卡进行推理时，需要在vLLM启动服务命令参数中增加<span style="color:blue;">-tp <gpu_num></span>
+The communication port used between the host and the Docker container is <span style="color:blue;">9999</span>. If it conflicts with the user's host machine port, please modify the setting for <span style="color:blue;">"--port"</span> in the <span style="color:blue;">ENTRYPOINT</span> section of the Dockerfile, as well as the port mapping relationship between the host machine and the container during the docker run startup process.
 
-这里模型目录我们以Orion-14B-Chat为例，并且给与推理服务的模型名为orion14b-chat，通过上一步构建的镜像名称<span style="color:blue;">vllm_server:0.0.0.0</span>启动推理服务
+For environment variable <span style="color:blue;">\$MODEL_ABSOLUTE_ROOT</span>, please fill in the absolute path of the host machine. At this case, we'll use the download path <span style="color:blue;">\$HOME/Downloads</span> for illustration.
+In this example, we assume the host has two graphics cards (0 and 1, which can be viewed using the nvidia-smi command) specified as <span style="color:blue;">"CUDA_VISIBLE_DEVICES=0,1"</span>. Additionally, when the container is launched, it will run the inference service using CUDA.
+
+When multiple cards are used for inference, it is necessary to add the <span style="color:blue;">-tp <gpu_num></span> parameter to the vLLM service startup command.
+
+For the model directory, we will use Orion-14B-Chat as an example, and the model name given to the inference service is orion14b-chat. The inference service is started using the previously built image named <span style="color:blue;">vllm_server:0.0.0.0</span>.
+
 ```shell
 docker run --gpus all -it -p 9999:9999 -v $(pwd)/logs:/workspace/logs:rw -v $HOME/Downloads:/workspace/models -e CUDA_VISIBLE_DEVICES=0,1 -e MODEL_DIR=Orion-14B-Chat -e MODEL_NAME=orion14b-chat vllm_server:0.0.0.0
 ```
-如果显卡内存过小，建议使用量化后版本的模型，例如对于猎户自研Orion14B模型，如果单卡显存小于32G,可以通过修改Dockerfile中ENTRYPOINT部分的代码，启动量化模型的推理服务。（注意这里的MODEL_DIR是量化版本的模型目录，记得加上数据类型和量化方法的参数<span style="color:blue;">--dtype float16 --quantization awq</span>）
+
+If the GPU memory is insufficient, it is recommended to use the quantized version of the model. For instance, with the self-developed Orion14B model by OrionStar, if the memory of a single GPU is less than 32GB, you can modify the code in the ENTRYPOINT section of the Dockerfile to start the inference service with the quantized model. (Note that here the MODEL_DIR should be the directory of the quantized version of the model, and remember to add the data type and quantization method parameters <span style="color:blue;">--dtype float16 --quantization awq</span>.)
 ```shell
 python -m vllm.entrypoints.openai.api_server --host=0.0.0.0 --port=9999 --model=/workspace/models/$MODEL_DIR --dtype float16 --quantization awq --trust-remote-code --gpu-memory-utilization=0.8 --device=cuda --enforce-eager --served-model-name=$MODEL_NAME
 ```
 
-## 3.3. 推理请求
-上述步骤都完成后，可以在本地新启动一个命令行界面，执行下面的命令，下面的命令中使用了<span style="color:blue;">0.0.0.0</span>的IP以及之前设置的对应端口号<span style="color:blue;">9999</span>，通过json的格式调用推理服务，模型名model字段对应了启动推理服务时使用的<span style="color:blue;">MODEL_NAME</span>。
+## 3.3. Inference request
+Once all the above steps are completed, you can open a new command line interface locally and execute the following command. In the command below, the IP <span style="color:blue;">0.0.0.0</span> and the previously set port number <span style="color:blue;">9999</span> are used to call the inference service in JSON format. The model name field in the model corresponds to the <span style="color:blue;">MODEL_NAME</span> used when starting the inference service.
 
-本例继续接上面的设置orion14b-chat，对话内容呈现在<span style="color:blue;">content</span>字段上，这里也可以通过<span style="color:blue;">stream</span>字段控制流式还是非流式输出。
+Continuing with the above settings, the model name is orion14b-chat. The dialogue content is presented in the <span style="color:blue;">content</span> field, and you can also control whether the output is streaming or non-streaming through the <span style="color:blue;">stream</span> field.
 ```shell
-curl http://0.0.0.0:9999/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "orion14b-chat","temperature": 0.2,"stream": false, "messages": [{"role": "user", "content":"你是谁开发的"}]}'
+curl http://0.0.0.0:9999/v1/chat/completions -H "Content-Type: application/json" -d '{"model": "orion14b-chat","temperature": 0.2,"stream": false, "messages": [{"role": "user", "content":"Which company developed you as an AI agent?"}]}'
 ```
