@@ -1,3 +1,8 @@
+<div align="center">
+     <b>🇨🇳中文</b> | <a href="./README.md">🌐English</a>
+</div>
+
+
 # 目录
 
 - [🎯 目的](#aim)
