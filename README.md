@@ -12,7 +12,7 @@ This project builds an LLM inference service image based on the vLLM inference f
 <a name="intro"></a><br>
 # 2. Description
 
-# 2.1. Inference service arch
+# 2.1. Inference Service Arch
 \<Inference service by running a docker image\> --------API Call-------- \<Inference request by client\>
 
 Inference steps：
@@ -35,7 +35,7 @@ The image is built on the Ubuntu 22.04 system and the Docker build steps include
 
 - Launching the vLLM's built-in inference service based on the OpenAI API.
 
-# 2.3. Host operating system
+# 2.3. Host Operating System
 
 The host operating systems that have been tested primarily include:
 
@@ -71,7 +71,7 @@ Users need to prepare the model for inference in advance and understand the mean
 <a name="steps"></a><br>
 # 3. Steps
 
-## 3.1. Build docker image
+## 3.1. Build Docker Image
 
 The build speed, depends on the network speed and the performance of the host machine. It involves downloading PIP packages, which could take from 20 minutes to 60 minutes.
 
@@ -85,7 +85,7 @@ cd vllm_server
 docker build -t vllm_server:0.0.0.0 -f Dockerfile .
 ```
 
-## 3.2. Run Docker image & start inference service
+## 3.2. Run Docker Image & Start Inference Service
 
 The communication port used between the host and the Docker container is <span style="color:blue;">9999</span>. If it conflicts with the user's host machine port, please modify the setting for <span style="color:blue;">"--port"</span> in the <span style="color:blue;">ENTRYPOINT</span> section of the Dockerfile, as well as the port mapping relationship between the host machine and the container during the docker run startup process.
 
@@ -105,7 +105,7 @@ If the GPU memory is insufficient, it is recommended to use the quantized versio
 python -m vllm.entrypoints.openai.api_server --host=0.0.0.0 --port=9999 --model=/workspace/models/$MODEL_DIR --dtype float16 --quantization awq --trust-remote-code --gpu-memory-utilization=0.8 --device=cuda --enforce-eager --served-model-name=$MODEL_NAME
 ```
 
-## 3.3. Inference request
+## 3.3. Inference Request
 Once all the above steps are completed, you can open a new command line interface locally and execute the following command. In the command below, the IP <span style="color:blue;">0.0.0.0</span> and the previously set port number <span style="color:blue;">9999</span> are used to call the inference service in JSON format. The model name field in the model corresponds to the <span style="color:blue;">MODEL_NAME</span> used when starting the inference service.
 
 Continuing with the above settings, the model name is orion14b-chat. The dialogue content is presented in the <span style="color:blue;">content</span> field, and you can also control whether the output is streaming or non-streaming through the <span style="color:blue;">stream</span> field.
